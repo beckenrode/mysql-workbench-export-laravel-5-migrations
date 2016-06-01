@@ -31,4 +31,6 @@ Want to contribute? Great!
 License
 ----
 
+Apache License Version 2.0
+
 **Free Software, Hell Yeah!**
