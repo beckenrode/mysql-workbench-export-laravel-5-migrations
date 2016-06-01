@@ -18,6 +18,11 @@ And of course this plugin is open source with a [public repository][https://gith
  - Select the plugin file
  - Click Open
 
+### Usage
+
+ - Open a model in MySQL Workbench
+ - Tools > Catalog > Export Laravel 5 Migration
+
 ### Development
 
 Want to contribute? Great!
