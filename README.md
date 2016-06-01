@@ -9,7 +9,7 @@ A MySQL Workbench plugin that allows for exporting a model to Laravel 5 migratio
 
 This plugin requires MySQL Workbench to work properly.
 
-And of course this plugin is open source with a [public repository][dill]
+And of course this plugin is open source with a [public repository][https://github.com/beckenrode/mysql-workbench-export-laravel-5-migrations]
  on GitHub.
 
 ### Installation
