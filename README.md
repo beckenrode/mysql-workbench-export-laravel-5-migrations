@@ -29,7 +29,6 @@ Want to contribute? Great!
 
 ### Todos
 
- - onDelete and onUpdate for foreign keys
  - indexes
  - multiple file saves
 
