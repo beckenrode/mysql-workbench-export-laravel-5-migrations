@@ -152,10 +152,11 @@ def generateLaravel5Migration(cat):
                 if fkey.name != '':
                     if fkey.referencedColumns[0].owner.name in migration_tables:
                         if first_foreign_created == 0:
-                            out.write('\n')
+                            out.write("        Schema::table('" + tbl.name + "', function (Blueprint $table) {\n")
                             first_foreign_created = 1
-                        out.write("        $table->dropForeign(['" + fkey.columns[0].name + "']);\n")
+                        out.write("            $table->dropForeign(['" + fkey.columns[0].name + "']);\n")
             if first_foreign_created == 1:
+                out.write("        });\n")
                 out.write('\n')
 
             for fkey, fval in foreign_keys.iteritems():
@@ -166,7 +167,6 @@ def generateLaravel5Migration(cat):
                         if item['table'] not in keyed_tables:
                             keyed_tables.append(item['table'])
                             if schema_table == 0:
-                                out.write('\n')
                                 out.write("        Schema::table('" + item['table'] + "', function (Blueprint $table) {\n")
                                 schema_table = 1
                             out.write("            $table->dropForeign(['" + item['name'] + "']);\n")
