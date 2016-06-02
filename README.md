@@ -29,7 +29,7 @@ Want to contribute? Great!
 
 ### Todos
 
- - foreign keys
+ - onDelete and onUpdate for foreign keys
  - indexes
  - multiple file saves
 
