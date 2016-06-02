@@ -29,7 +29,11 @@ def generateLaravel5Migration(cat):
         if len(schema.tables) == 0:
             return
 
+        foreign_keys = {};
+        migration_tables = [];
+
         for tbl in schema.tables:
+            migration_tables.append(tbl.name)
             out.write('<?php\n')
             out.write('\n')
             out.write('use Illuminate\Database\Schema\Blueprint;\n')
@@ -101,7 +105,38 @@ def generateLaravel5Migration(cat):
                     out.write(";")
                     out.write('\n')
 
+            first_foreign_created = 0
+            for fkey in tbl.foreignKeys:
+                if fkey.name != '':
+                    if fkey.referencedColumns[0].owner.name in migration_tables:
+                        if first_foreign_created == 0:
+                            out.write('\n')
+                            first_foreign_created = 1
+                        out.write("            $table->foreign('" + fkey.columns[0].name + "')->references('" + fkey.referencedColumns[0].name + "')->on('" + fkey.referencedColumns[0].owner.name + "');")
+                        out.write('\n')
+                    else:
+                        if fkey.referencedColumns[0].owner.name not in foreign_keys:
+                            foreign_keys[fkey.referencedColumns[0].owner.name] = []
+                        foreign_keys[fkey.referencedColumns[0].owner.name].append({'table':fkey.columns[0].owner.name, 'name':fkey.columns[0].name, 'referenced_table':fkey.referencedColumns[0].owner.name, 'referenced_name':fkey.referencedColumns[0].name})
+
             out.write("        });\n")
+
+            for fkey, fval in foreign_keys.iteritems():
+                if fkey == tbl.name:
+                    keyed_tables = []
+                    schema_table = 0
+                    for item in fval:
+                        if item['table'] not in keyed_tables:
+                            keyed_tables.append(item['table'])
+                            if schema_table == 0:
+                                out.write('\n')
+                                out.write("        Schema::table('" + item['table'] + "', function (Blueprint $table) {\n")
+                                schema_table = 1
+                            out.write("            $table->foreign('" + item['name'] + "')->references('" + item['referenced_name'] + "')->on('" + item['referenced_table'] + "');\n")
+                    if schema_table == 1:
+                        out.write("        });\n")
+                        out.write('\n')
+
             out.write('    }\n')
             out.write('\n')
             out.write('    /**\n')
@@ -111,6 +146,34 @@ def generateLaravel5Migration(cat):
             out.write('     */\n')
             out.write('    public function down()\n')
             out.write('    {\n')
+
+            first_foreign_created = 0
+            for fkey in tbl.foreignKeys:
+                if fkey.name != '':
+                    if fkey.referencedColumns[0].owner.name in migration_tables:
+                        if first_foreign_created == 0:
+                            out.write('\n')
+                            first_foreign_created = 1
+                        out.write("        $table->dropForeign(['" + fkey.columns[0].name + "']);\n")
+            if first_foreign_created == 1:
+                out.write('\n')
+
+            for fkey, fval in foreign_keys.iteritems():
+                if fkey == tbl.name:
+                    keyed_tables = []
+                    schema_table = 0
+                    for item in fval:
+                        if item['table'] not in keyed_tables:
+                            keyed_tables.append(item['table'])
+                            if schema_table == 0:
+                                out.write('\n')
+                                out.write("        Schema::table('" + item['table'] + "', function (Blueprint $table) {\n")
+                                schema_table = 1
+                            out.write("            $table->dropForeign(['" + item['name'] + "']);\n")
+                    if schema_table == 1:
+                        out.write("        });\n")
+                        out.write('\n')
+
             out.write("        Schema::drop('" + tbl.name + "');\n")
             out.write('    }\n')
             out.write('}\n\n\n')
