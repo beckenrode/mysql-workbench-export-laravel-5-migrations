@@ -112,15 +112,13 @@ def generateLaravel5Migration(cat):
                         if first_foreign_created == 0:
                             out.write('\n')
                             first_foreign_created = 1
-                        out.write("            $table->foreign('" + fkey.columns[0].name + "')->references('" + fkey.referencedColumns[0].name + "')->on('" + fkey.referencedColumns[0].owner.name + "');")
+                        out.write("            $table->foreign('" + fkey.columns[0].name + "')->references('" + fkey.referencedColumns[0].name + "')->on('" + fkey.referencedColumns[0].owner.name + "')->onDelete('" + fkey.deleteRule.lower() + "')->onUpdate('" + fkey.updateRule.lower() + "');")
                         out.write('\n')
                     else:
                         if fkey.referencedColumns[0].owner.name not in foreign_keys:
                             foreign_keys[fkey.referencedColumns[0].owner.name] = []
-                        foreign_keys[fkey.referencedColumns[0].owner.name].append({'table':fkey.columns[0].owner.name, 'name':fkey.columns[0].name, 'referenced_table':fkey.referencedColumns[0].owner.name, 'referenced_name':fkey.referencedColumns[0].name})
-
+                        foreign_keys[fkey.referencedColumns[0].owner.name].append({'table':fkey.columns[0].owner.name, 'name':fkey.columns[0].name, 'referenced_table':fkey.referencedColumns[0].owner.name, 'referenced_name':fkey.referencedColumns[0].name, 'update_rule':fkey.updateRule, 'delete_rule':fkey.deleteRule})
             out.write("        });\n")
-
             for fkey, fval in foreign_keys.iteritems():
                 if fkey == tbl.name:
                     keyed_tables = []
@@ -132,7 +130,7 @@ def generateLaravel5Migration(cat):
                                 out.write('\n')
                                 out.write("        Schema::table('" + item['table'] + "', function (Blueprint $table) {\n")
                                 schema_table = 1
-                            out.write("            $table->foreign('" + item['name'] + "')->references('" + item['referenced_name'] + "')->on('" + item['referenced_table'] + "');\n")
+                            out.write("            $table->foreign('" + item['name'] + "')->references('" + item['referenced_name'] + "')->on('" + item['referenced_table'] + "')->onDelete('" + item['delete_rule'].lower() + "')->onUpdate('" + item['update_rule'].lower() + "');\n")
                     if schema_table == 1:
                         out.write("        });\n")
                         out.write('\n')
