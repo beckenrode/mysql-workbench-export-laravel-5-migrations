@@ -35,6 +35,6 @@ Want to contribute? Great!
 License
 ----
 
-Apache License Version 2.0
+The MIT License (MIT)
 
 **Free Software, Hell Yeah!**
