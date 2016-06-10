@@ -92,7 +92,7 @@ def generateLaravel5Migration(cat):
                         col_data = "', " + str(col.length)
 
                 if(typesDict[col_type]) :
-                    migrations[tbl.name].append("            $table->" + typesDict[col_type] + "('" + col.name + col_data + ")")
+                    migrations[tbl.name].append('            $table->%s(\'%s%s)' % (typesDict[col_type], col.name, col_data))
                     if typesDict[col_type] == 'integer' and 'UNSIGNED' in col.flags:
                         migrations[tbl.name].append('->unsigned()')
                     if col.isNotNull != 1:
