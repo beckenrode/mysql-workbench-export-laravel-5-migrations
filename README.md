@@ -3,7 +3,7 @@
 A MySQL Workbench plugin that allows for exporting a model to Laravel 5 migrations that follow PSR-2 coding standards.
 
 ### Version
-0.1.0
+0.1.1
 
 ### Tech
 
@@ -30,7 +30,6 @@ Want to contribute? Great!
 ### Todos
 
  - indexes
- - multiple file saves
 
 License
 ----
