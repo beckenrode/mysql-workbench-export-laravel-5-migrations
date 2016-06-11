@@ -75,21 +75,21 @@ def generateLaravel5Migration(cat):
                     else:
                         col_type = 'INCREMENTS'
 
-                col_data = "'"
+                col_data = '\''
                 if typesDict[col_type] == 'char':
                     if col.length > -1:
-                        col_data = "', " + str(col.length)
+                        col_data = '\', %s' % (str(col.length))
                 elif typesDict[col_type] == 'decimal':
                     if col.precision > -1 and col.scale > -1:
-                        col_data = "', " + str(col.precision) + ", " + str(col.scale)
+                        col_data = '\', %s, %s' % (str(col.precision), str(col.scale))
                 elif typesDict[col_type] == 'double':
                     if col.precision > -1 and col.length > -1:
-                        col_data = "', " + str(col.length) + ", " + str(col.precision)
+                        col_data = '\', %s, %s' % (str(col.length), str(col.precision))
                 elif typesDict[col_type] == 'enum':
-                    col_data = "', [" + col.datatypeExplicitParams[1:-1] + "]"
+                    col_data = '\', [%s]' % (col.datatypeExplicitParams[1:-1])
                 elif typesDict[col_type] == 'string':
                     if col.length > -1:
-                        col_data = "', " + str(col.length)
+                        col_data = '\', %s' % (str(col.length))
 
                 if(typesDict[col_type]) :
                     migrations[tbl.name].append('            $table->%s(\'%s%s)' % (typesDict[col_type], col.name, col_data))
