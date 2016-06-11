@@ -279,14 +279,14 @@ typesDict = {
     'VARCHAR':'string', \
     'BINARY':'binary', \
     'VARBINARY':'', \
-    'TINYTEXT':'', \
+    'TINYTEXT':'text', \
     'TEXT':'text', \
     'MEDIUMTEXT':'mediumText', \
     'LONGTEXT':'longText', \
-    'TINYBLOB':'', \
+    'TINYBLOB':'binary', \
     'BLOB':'binary', \
-    'MEDIUMBLOB':'', \
-    'LONGBLOB':'', \
+    'MEDIUMBLOB':'binary', \
+    'LONGBLOB':'binary', \
     'DATETIME':'dateTime', \
     'DATETIME_F':'dateTime', \
     'DATE':'date', \

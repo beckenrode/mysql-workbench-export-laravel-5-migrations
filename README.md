@@ -31,6 +31,9 @@ Want to contribute? Great!
 ### Todos
 
  - indexes
+ - timestamps
+ - softDeletes
+ - uncommon types
 
 License
 ----
