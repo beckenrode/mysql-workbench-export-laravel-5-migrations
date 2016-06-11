@@ -33,7 +33,7 @@ Want to contribute? Great!
  - indexes
  - timestamps
  - softDeletes
- - uncommon types
+ - types that are unsupported by Laravel
 
 License
 ----
