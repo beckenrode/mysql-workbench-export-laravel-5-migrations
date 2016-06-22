@@ -115,7 +115,7 @@ def generateLaravel5Migration(cat):
                         col_data = '\', %s' % (str(col.length))
 
                 if col.name == 'remember_token' and typesDict[col_type] == 'string' and str(col.length) = 100:
-                    migrations[tbl.name].append('            $table->rememberToken();\n'
+                    migrations[tbl.name].append('            $table->rememberToken();\n')
                 elif(typesDict[col_type]) :
                     migrations[tbl.name].append('            $table->%s(\'%s%s)' % (typesDict[col_type], col.name, col_data))
                     if typesDict[col_type] == 'integer' and 'UNSIGNED' in col.flags:
