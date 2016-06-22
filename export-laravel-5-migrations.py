@@ -54,7 +54,36 @@ def generateLaravel5Migration(cat):
             migrations[tbl.name].append('    {\n')
             migrations[tbl.name].append('        Schema::create(\'%s\', function (Blueprint $table) {\n' % (tbl.name))
 
+            created_at = False
+            created_at_nullable = False
+            updated_at = False
+            updated_at_nullable = False
+            deleted_at = False
+            timestamps = False
+            timestamps_nullable = False
+
             for col in tbl.columns:
+                if col.name == 'created_at':
+                    created_at = True
+                    if col.isNotNull != 1:
+                        created_at_nullable = True
+                elif col.name == 'updated_at':
+                    updated_at = True
+                    if col.isNotNull != 1:
+                        updated_at_nullable = True
+
+            if created_at is True and updated_at is True and created_at_nullable is True and updated_at_nullable is True:
+                timestamps_nullable = True
+            elif created_at is True and updated_at is True:
+                timestamps = True
+
+            for col in tbl.columns:
+                if (col.name == 'created_at' or col.name == 'updated_at') and (timestamps is True or timestamps_nullable is True):
+                    continue
+                if col.name == 'deleted_at':
+                    deleted_at = True
+                    continue
+
                 if col.simpleType:
                     col_type = col.simpleType.name
                     col_flags = col.simpleType.flags
@@ -105,6 +134,13 @@ def generateLaravel5Migration(cat):
                         migrations[tbl.name].append('->comment(\'%s\')' % (col.comment))
                     migrations[tbl.name].append(";")
                     migrations[tbl.name].append('\n')
+
+            if deleted_at is True:
+                migrations[tbl.name].append('            $table->softDeletes();\n')
+            if timestamps is True:
+                migrations[tbl.name].append('            $table->timestamps();\n')
+            elif timestamps_nullable is True:
+                migrations[tbl.name].append('            $table->nullableTimestamps();\n')
 
             first_foreign_created = 0
             for fkey in tbl.foreignKeys:

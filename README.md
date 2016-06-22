@@ -4,7 +4,7 @@ A MySQL Workbench plugin that allows for exporting a model to Laravel 5 migratio
 saved in it's own, properly named, migration file.
 
 ### Version
-0.1.1
+0.1.2
 
 ### Tech
 
@@ -31,8 +31,6 @@ Want to contribute? Great!
 ### Todos
 
  - indexes
- - timestamps
- - softDeletes
  - types that are unsupported by Laravel
 
 License
