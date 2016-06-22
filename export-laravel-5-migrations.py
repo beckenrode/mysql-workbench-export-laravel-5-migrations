@@ -54,13 +54,7 @@ def generateLaravel5Migration(cat):
             migrations[tbl.name].append('    {\n')
             migrations[tbl.name].append('        Schema::create(\'%s\', function (Blueprint $table) {\n' % (tbl.name))
 
-            created_at = False
-            created_at_nullable = False
-            updated_at = False
-            updated_at_nullable = False
-            deleted_at = False
-            timestamps = False
-            timestamps_nullable = False
+            created_at = created_at_nullable = updated_at = updated_at_nullable = deleted_at = timestamps = timestamps_nullable = False
 
             for col in tbl.columns:
                 if col.name == 'created_at':
