@@ -200,7 +200,7 @@ def generateLaravel5Migration(cat):
                             if schema_table == 0:
                                 migrations[tbl.name].append('        Schema::table(\'%s\', function (Blueprint $table) {\n' % (item['table']))
                                 schema_table = 1
-                            migrations[tbl.name].append('            $table->dropForeign([\'%s\');\n' % (item['name']))
+                            migrations[tbl.name].append('            $table->dropForeign([\'%s\']);\n' % (item['name']))
                     if schema_table == 1:
                         migrations[tbl.name].append("        });\n")
                         migrations[tbl.name].append('\n')
