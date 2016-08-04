@@ -4,7 +4,7 @@ A MySQL Workbench plugin that allows for exporting a model to Laravel 5 migratio
 saved in it's own, properly named, migration file.
 
 ### Version
-0.1.3
+0.1.4
 
 ### Tech
 
