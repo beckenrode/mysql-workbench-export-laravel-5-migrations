@@ -34,7 +34,7 @@ def generateLaravel5Migration(cat):
         migration_tables = []
         global migrations
 
-        for tbl in schema.tables:
+        for tbl in sorted(schema.tables, key=lambda table: table.name):
             migration_tables.append(tbl.name)
             migrations[tbl.name] = []
             migrations[tbl.name].append('<?php\n')
