@@ -17,7 +17,7 @@ from mforms import newButton, newCodeEditor, FileChooser
 
 ModuleInfo = DefineModule(name='GenerateLaravel5Migration',
                           author='Brandon Eckenrode',
-                          version='0.1.2')
+                          version='0.1.5')
 
 @ModuleInfo.plugin('wb.util.generateLaravel5Migration',
                    caption='Export Laravel 5 Migration',
