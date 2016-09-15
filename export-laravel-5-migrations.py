@@ -205,8 +205,15 @@ def generateLaravel5Migration(cat):
                         if item['table'] not in keyed_tables:
                             keyed_tables.append(item['table'])
                             if schema_table == 0:
+                                foreign_tbl_name = item['table']
+                                migrations[tbl.name].append('\n')
                                 migrations[tbl.name].append('        Schema::table(\'%s\', function (Blueprint $table) {\n' % (item['table']))
                                 schema_table = 1
+                            elif foreign_tbl_name != item['table']:
+                                foreign_tbl_name = item['table']
+                                migrations[tbl.name].append("        });\n")
+                                migrations[tbl.name].append('\n')
+                                migrations[tbl.name].append('        Schema::table(\'%s\', function (Blueprint $table) {\n' % (item['table']))
                             migrations[tbl.name].append('            $table->dropForeign([\'%s\']);\n' % (item['name']))
                     if schema_table == 1:
                         migrations[tbl.name].append("        });\n")
