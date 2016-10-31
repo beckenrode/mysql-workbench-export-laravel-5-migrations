@@ -444,7 +444,7 @@ def generateLaravel5Migration(cat):
         return 1
 
     for name in sorted(migrations):
-        out.write('Table name: {0}\n\n\n'.format(migration_tables[mkey]))
+        out.write('Table name: {0}\n\n\n'.format(migration_tables[name]))
         out.write(''.join(migrations[name]))
         out.write('\n\n\n'.format(name))
 
