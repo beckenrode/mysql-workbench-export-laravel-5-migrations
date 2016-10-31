@@ -30,7 +30,6 @@ Want to contribute? Great!
 
 ### Todos
 
- - indexes
  - types that are unsupported by Laravel
 
 License
