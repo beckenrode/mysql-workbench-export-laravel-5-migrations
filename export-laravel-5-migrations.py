@@ -378,55 +378,6 @@ def generateLaravel5Migration(cat):
                     ##########
 
                     migrations[ti].append(migrationDownTemplate)
-
-                    # Not needed?
-                    # first_foreign_created = False
-                    # for fkey in tbl.foreignKeys:
-                    #     if fkey.name != '':
-                    #         if fkey.referencedColumns[0].owner.name in migration_tables or tbl.indices:
-                    #             if not first_foreign_created:
-                    #                 migrations[ti].append(
-                    #                     schemaCreateTemplate.format(tableName=tbl.name)
-                    #                 )
-                    #                 first_foreign_created = True
-                    #
-                    #             migrations[ti].append(
-                    #                 "            $table->dropForeign('{key}');\n".format(key=fkey.columns[0].name))
-                    #
-                    # if first_foreign_created:
-                    #     migrations[ti].append("        });\n")
-                    #     migrations[ti].append('\n')
-                    #
-                    # for fkey, fval in foreign_keys.iteritems():
-                    #     if fkey == table.name:
-                    #         keyed_tables = []
-                    #         schema_table = 0
-                    #         for item in fval:
-                    #             if item['table'] not in keyed_tables:
-                    #                 keyed_tables.append(item['table'])
-                    #
-                    #                 if schema_table == 0:
-                    #                     foreign_table_name = item['table']
-                    #                     migrations[table.name].append('\n')
-                    #                     migrations[table.name].append(
-                    #                         '        Schema::table(\'%s\', function (Blueprint $table) {\n' % (item['table']))
-                    #                     schema_table = 1
-                    #
-                    #                 elif foreign_table_name != item['table']:
-                    #                     foreign_table_name = item['table']
-                    #                     migrations[table.name].append("        });\n")
-                    #                     migrations[table.name].append('\n')
-                    #                     migrations[table.name].append(
-                    #                         '        Schema::table(\'%s\', function (Blueprint $table) {\n' % (item['table']))
-                    #
-                    #                 migrations[table.name].append(
-                    #                     "            $table->dropForeign('{key}');\n".format(key=item['name'])
-                    #                 )
-                    #
-                    #         if schema_table == 1:
-                    #             migrations[table.name].append("        });\n")
-                    #             migrations[table.name].append('\n')
-
                     migrations[ti].append(migrationEndingTemplate.format(tableName=table_name))
                     ti += 1
 
