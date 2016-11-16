@@ -15,9 +15,7 @@ from wb import DefineModule, wbinputs
 from workbench.ui import WizardForm, WizardPage
 from mforms import newButton, newCodeEditor, FileChooser
 
-ModuleInfo = DefineModule(name='GenerateLaravel5Migration',
-                          author='Brandon Eckenrode', 
-                          version='0.1.5')
+ModuleInfo = DefineModule(name='GenerateLaravel5Migration', author='Brandon Eckenrode', version='0.1.5')
 migrations = {}
 migration_tables = []
 
@@ -85,10 +83,8 @@ typesDict = {
 
 migrationBegginingTemplate = '''
 <?php
-
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
-
 class Create{tableNameCamelCase}Table extends Migration
 {{
     /**
@@ -103,7 +99,7 @@ class Create{tableNameCamelCase}Table extends Migration
 '''
 
 foreignKeyTemplate = '''
-            $table->foreign('{foreignKey}')
+            $table->foreign('{foreignKey}', '{foreignKeyName}')
                 ->references('{tableKeyName}')->on('{foreignTableName}')
                 ->onDelete('{onDeleteAction}')
                 ->onUpdate('{onUpdateAction}');
@@ -124,7 +120,8 @@ schemaCreateTemplate = '''
 '''
 
 
-migrationEndingTemplate = '''        Schema::drop('{tableName}');
+migrationEndingTemplate = '''
+        Schema::drop('{tableName}');
     }}
 }}
 '''
@@ -132,9 +129,9 @@ migrationEndingTemplate = '''        Schema::drop('{tableName}');
 @ModuleInfo.plugin('wb.util.generateLaravel5Migration',
                    caption='Export Laravel 5 Migration',
                    input=[wbinputs.currentCatalog()],
-                   groups=['Catalog/Utilities', 'Menu/Catalog'])
+                   groups=['Catalog/Utilities', 'Menu/Catalog']
+                   )
 @ModuleInfo.export(grt.INT, grt.classes.db_Catalog)
-
 def generateLaravel5Migration(cat):
 
     def create_tree(out, schema, is_main_schema):
@@ -150,7 +147,6 @@ def generateLaravel5Migration(cat):
 
         d = dict((k, set(table_tree[k])) for k in table_tree)
         r = []
-
         while d:
             # values not in keys (items without dep)
             t = set(i for v in d.values() for i in v) - set(d.keys())
@@ -160,7 +156,6 @@ def generateLaravel5Migration(cat):
             r.append(t)
             # and cleaned up
             d = dict(((k, v - t) for k, v in d.items() if v))
-
         return r
 
     def export_schema(out, schema, is_main_schema, table_tree):
@@ -303,21 +298,21 @@ def generateLaravel5Migration(cat):
 
                     for fkey in tbl.foreignKeys:
                         if fkey.name != '':
-                            #mforms.Utilities.set_clipboard_text(fkey.name)
-                            #index_name = fkey.index.name
-                            index_name = fkey.index
+                            index_name = fkey.index.name
                             foreign_key = fkey.columns[0].name
 
                             if index_name == 'PRIMARY':
                                 index_name = tbl.name + "_" + fkey.columns[0].name
 
                             if fkey.referencedColumns[0].owner.name in migration_tables:
+
                                 if not first_foreign_created:
                                     migrations[ti].append('\n')
                                     first_foreign_created = True
 
                                 migrations[ti].append(foreignKeyTemplate.format(
                                         foreignKey=foreign_key,
+                                        foreignKeyName=index_name,
                                         tableKeyName=fkey.referencedColumns[0].name,
                                         foreignTableName=fkey.referencedColumns[0].owner.name,
                                         onDeleteAction=fkey.deleteRule.lower(),
@@ -331,6 +326,7 @@ def generateLaravel5Migration(cat):
                                 foreign_keys[fkey.referencedColumns[0].owner.name].append({
                                     'table': fkey.columns[0].owner.name,
                                     'key': foreign_key,
+                                    'name': index_name,
                                     'referenced_table': fkey.referencedColumns[0].owner.name,
                                     'referenced_name': fkey.referencedColumns[0].name,
                                     'update_rule': fkey.updateRule,
@@ -362,6 +358,7 @@ def generateLaravel5Migration(cat):
                                         )
                                     migrations[ti].append(foreignKeyTemplate.format(
                                         foreignKey=item['key'],
+                                        foreignKeyName=item['name'],
                                         tableKeyName=item['referenced_name'],
                                         foreignTableName=item['referenced_table'],
                                         onDeleteAction=item['delete_rule'].lower(),
