@@ -3,8 +3,9 @@
 # A MySQL Workbench plugin which exports a Model to Laravel 5 Migrations
 # Written in MySQL Workbench 6.3.6
 
-import re
 import cStringIO
+import glob
+import os
 
 import grt
 import mforms
@@ -20,7 +21,8 @@ migrations = {}
 migration_tables = []
 
 typesDict = {
-    'BIGINCREMENTS': 'bigIncrements',
+    'BIG_INCREMENTS': 'bigIncrements',
+    'MEDIUM_INCREMENTS': 'mediumIncrements',
     'INCREMENTS': 'increments',
     'TINYINT': 'tinyInteger',
     'SMALLINT': 'smallInteger',
@@ -30,6 +32,7 @@ typesDict = {
     'FLOAT': 'float',
     'DOUBLE': 'double',
     'DECIMAL': 'decimal',
+    'JSON': 'json',
     'CHAR': 'char',
     'VARCHAR': 'string',
     'BINARY': 'binary',
@@ -81,10 +84,11 @@ typesDict = {
     'CHARACTER': 'char'
 }
 
-migrationBegginingTemplate = '''
-<?php
+migrationTemplate = '''<?php
+
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+
 class Create{tableNameCamelCase}Table extends Migration
 {{
     /**
@@ -119,33 +123,36 @@ schemaCreateTemplate = '''
         Schema::table('{tableName}', function (Blueprint $table) {{
 '''
 
+indexKeyTemplate = '''
+            $table->{indexType}([{keys}], '{indexType}_{tableName}');
+'''
 
-migrationEndingTemplate = '''
-        Schema::drop('{tableName}');
-    }}
+migrationEndingTemplate = '''       Schema::dropIfExists('{tableName}');
+     }}
 }}
 '''
 
-@ModuleInfo.plugin('wb.util.generateLaravel5Migration',
+
+@ModuleInfo.plugin('wb.util.generate_laravel5_migration',
                    caption='Export Laravel 5 Migration',
                    input=[wbinputs.currentCatalog()],
                    groups=['Catalog/Utilities', 'Menu/Catalog']
                    )
 @ModuleInfo.export(grt.INT, grt.classes.db_Catalog)
-def generateLaravel5Migration(cat):
+def generate_laravel5_migration(cat):
 
-    def create_tree(out, schema, is_main_schema):
-        table_tree = {}
-        for tbl in sorted(schema.tables, key=lambda table: table.name):
+    def create_tree(table_schema):
+        tree = {}
+        for tbl in sorted(table_schema.tables, key=lambda table: table.name):
             table_references = []
 
-            for fkey in tbl.foreignKeys:
-                if fkey.name != '':
-                    table_references.append(fkey.referencedColumns[0].owner.name)
+            for key in tbl.foreignKeys:
+                if key.name != '':
+                    table_references.append(key.referencedColumns[0].owner.name)
 
-            table_tree[tbl.name] = table_references
+            tree[tbl.name] = table_references
 
-        d = dict((k, set(table_tree[k])) for k in table_tree)
+        d = dict((k, set(tree[k])) for k in tree)
         r = []
         while d:
             # values not in keys (items without dep)
@@ -158,17 +165,17 @@ def generateLaravel5Migration(cat):
             d = dict(((k, v - t) for k, v in d.items() if v))
         return r
 
-    def export_schema(out, schema, is_main_schema, table_tree):
-        if len(schema.tables) == 0:
+    def export_schema(table_schema, tree):
+        if len(table_schema.tables) == 0:
             return
 
         foreign_keys = {}
         global migration_tables
         global migrations
-        tables = sorted(schema.tables, key=lambda table: table.name)
+        tables = sorted(table_schema.tables, key=lambda table: table.name)
         ti = 0
 
-        for reference_tables in table_tree:
+        for reference_tables in tree:
             for reference in reference_tables:
                 for tbl in tables:
 
@@ -176,14 +183,19 @@ def generateLaravel5Migration(cat):
                         continue
 
                     table_name = tbl.name
+                    table_engine = tbl.tableEngine
                     components = table_name.split('_')
 
                     migration_tables.append(table_name)
                     migrations[ti] = []
 
-                    migrations[ti].append(migrationBegginingTemplate.format(
+                    migrations[ti].append(migrationTemplate.format(
                         tableNameCamelCase=("".join(x.title() for x in components[0:])),
                         tableName=table_name
+                    ))
+
+                    migrations[ti].append("            $table->engine = '{tableEngine}';\n".format(
+                        tableEngine=table_engine
                     ))
 
                     created_at = created_at_nullable \
@@ -203,12 +215,18 @@ def generateLaravel5Migration(cat):
                             if col.isNotNull != 1:
                                 updated_at_nullable = True
 
-                    if created_at is True and updated_at is True and created_at_nullable is True and updated_at_nullable is True:
-                        timestamps_nullable = True
+                    if created_at is True and updated_at is True and created_at_nullable is True:
+                        if updated_at_nullable is True:
+                            timestamps_nullable = True
+                        elif created_at is True and updated_at is True:
+                            timestamps = True
                     elif created_at is True and updated_at is True:
                         timestamps = True
 
-                    pk_column = None
+                    primary_key = [col for col in tbl.indices if col.isPrimary == 1]
+                    primary_key = primary_key[0] if len(primary_key) > 0 else None
+                    primary_col = primary_key.columns[0].referencedColumn
+
                     for col in tbl.columns:
                         if (col.name == 'created_at' or col.name == 'updated_at') and (
                                         timestamps is True or timestamps_nullable is True):
@@ -220,22 +238,16 @@ def generateLaravel5Migration(cat):
 
                         if col.simpleType:
                             col_type = col.simpleType.name
-                            col_flags = col.simpleType.flags
                         else:
                             col_type = col.userType.name
-                            col_flags = col.flags
 
-                        primary_key = [i for i in tbl.indices if i.isPrimary == 1]
-                        primary_key = primary_key[0] if len(primary_key) > 0 else None
-
-                        if primary_key and len(primary_key.columns) == 1:
-                            pk_column = primary_key.columns[0].referencedColumn
-
-                        if col == pk_column:
-                            if col_type == 'BIGINT':
-                                col_type = 'BIGINCREMENTS'
+                        if col == primary_col:
+                            if col_type == "BIGINT":
+                                col_type = "BIG_INCREMENTS"
+                            elif col_type == "MEDIUMINT":
+                                col_type = "MEDIUM_INCREMENTS"
                             else:
-                                col_type = 'INCREMENTS'
+                                col_type = "INCREMENTS"
 
                         col_data = '\''
                         if typesDict[col_type] == 'char':
@@ -258,34 +270,41 @@ def generateLaravel5Migration(cat):
                         elif typesDict[col_type]:
                             migrations[ti].append(
                                 '            $table->%s(\'%s%s)' % (typesDict[col_type], col.name, col_data))
+
                             if typesDict[col_type] == 'integer' and 'UNSIGNED' in col.flags:
                                 migrations[ti].append('->unsigned()')
+
                             if col.isNotNull != 1:
                                 migrations[ti].append('->nullable()')
+
                             if col.defaultValue != '' and col.defaultValueIsNull != 0:
                                 migrations[ti].append('->default(NULL)')
                             elif col.defaultValue != '':
                                 migrations[ti].append('->default(%s)' % col.defaultValue)
+
                             if col.comment != '':
-                                migrations[ti].append('->comment(\'%s\')' % col.comment)
+                                migrations[ti].append("->comment('{comment}')".format(comment=col.comment))
+
                             migrations[ti].append(';\n')
 
-                    if tbl.indices:
-                        migrations[ti].append("            # Indexes\n")
+                    # Generate indexes
+                    indexes = {"primary": [], "unique": [], "index": []}
+                    for col in tbl.indices:
+                        for index in col.columns:
+                            index_type = index.owner.indexType.lower()
+                            key = index.referencedColumn.name
 
-                        for column in tbl.indices:
-                            for index in column.columns:
-                                index_type = index.owner.indexType.lower()
-                                key = index.referencedColumn.name
+                            if col != primary_col and index_type != "primary":
+                                indexes[index_type].append(key)
 
-                                # Do not add index for increments
-                                if not column.isPrimary:
-
-                                    index_key_template = "            $table->{indexType}('{key}');\n".format(
-                                        indexType=index_type,
-                                        key=key
-                                    )
-                                    migrations[ti].append(index_key_template)
+                    for index_type in indexes:
+                        if len(indexes[index_type]) != 0:
+                            index_key_template = indexKeyTemplate.format(
+                                indexType=index_type,
+                                keys=", ".join(['"{}"'.format(value) for value in indexes[index_type]]),
+                                tableName=table_name
+                            )
+                            migrations[ti].append(index_key_template)
 
                     if deleted_at is True:
                         migrations[ti].append('            $table->softDeletes();\n')
@@ -296,61 +315,61 @@ def generateLaravel5Migration(cat):
 
                     first_foreign_created = False
 
-                    for fkey in tbl.foreignKeys:
-                        if fkey.name != '':
-                            index_name = fkey.index.name
-                            foreign_key = fkey.columns[0].name
+                    for key in tbl.foreignKeys:
+                        if key.name != '':
+                            index_name = key.index.name
+                            foreign_key = key.columns[0].name
 
                             if index_name == 'PRIMARY':
-                                index_name = tbl.name + "_" + fkey.columns[0].name
+                                index_name = tbl.name + "_" + key.columns[0].name
 
-                            if fkey.referencedColumns[0].owner.name in migration_tables:
+                            if key.referencedColumns[0].owner.name in migration_tables:
 
                                 if not first_foreign_created:
                                     migrations[ti].append('\n')
                                     first_foreign_created = True
 
                                 migrations[ti].append(foreignKeyTemplate.format(
-                                        foreignKey=foreign_key,
-                                        foreignKeyName=index_name,
-                                        tableKeyName=fkey.referencedColumns[0].name,
-                                        foreignTableName=fkey.referencedColumns[0].owner.name,
-                                        onDeleteAction=fkey.deleteRule.lower(),
-                                        onUpdateAction=fkey.updateRule.lower()
+                                    foreignKey=foreign_key,
+                                    foreignKeyName=index_name,
+                                    tableKeyName=key.referencedColumns[0].name,
+                                    foreignTableName=key.referencedColumns[0].owner.name,
+                                    onDeleteAction=key.deleteRule.lower(),
+                                    onUpdateAction=key.updateRule.lower()
                                 ))
 
                             else:
-                                if fkey.referencedColumns[0].owner.name not in foreign_keys:
-                                    foreign_keys[fkey.referencedColumns[0].owner.name] = []
+                                if key.referencedColumns[0].owner.name not in foreign_keys:
+                                    foreign_keys[key.referencedColumns[0].owner.name] = []
 
-                                foreign_keys[fkey.referencedColumns[0].owner.name].append({
-                                    'table': fkey.columns[0].owner.name,
+                                foreign_keys[key.referencedColumns[0].owner.name].append({
+                                    'table': key.columns[0].owner.name,
                                     'key': foreign_key,
                                     'name': index_name,
-                                    'referenced_table': fkey.referencedColumns[0].owner.name,
-                                    'referenced_name': fkey.referencedColumns[0].name,
-                                    'update_rule': fkey.updateRule,
-                                    'delete_rule': fkey.deleteRule
+                                    'referenced_table': key.referencedColumns[0].owner.name,
+                                    'referenced_name': key.referencedColumns[0].name,
+                                    'update_rule': key.updateRule,
+                                    'delete_rule': key.deleteRule
                                 })
 
                     migrations[ti].append("        });\n")
 
-                    for fkey, fval in foreign_keys.iteritems():
-                        if fkey == tbl.name:
+                    for key, val in foreign_keys.iteritems():
+                        if key == tbl.name:
                             keyed_tables = []
                             schema_table = 0
-                            for item in fval:
+                            for item in val:
                                 if item['table'] not in keyed_tables:
                                     keyed_tables.append(item['table'])
+                                    foreign_table_name = item['table']
+
                                     if schema_table == 0:
-                                        foreign_table_name = item['table']
                                         migrations[ti].append('\n')
                                         migrations[ti].append(
                                             schemaCreateTemplate.format(tableName=item['table'])
                                         )
                                         schema_table = 1
                                     elif foreign_table_name != item['table']:
-                                        foreign_table_name = item['table']
                                         migrations[ti].append("        });\n")
                                         migrations[ti].append('\n')
                                         migrations[ti].append(
@@ -385,15 +404,23 @@ def generateLaravel5Migration(cat):
 
     try:
         for schema in [(s, s.name == 'main') for s in cat.schemata]:
-            table_tree = create_tree(out, schema[0], schema[1])
-            migrations = export_schema(out, schema[0], schema[1], table_tree)
+            table_tree = create_tree(schema[0])
+            migrations = export_schema(schema[0], table_tree)
 
     except GenerateLaravel5MigrationError as e:
         Workbench.confirm(e.typ, e.message)
         return 1
 
+    now = datetime.datetime.now()
     for name in sorted(migrations):
-        out.write('Table name: {0}\n\n\n'.format(migration_tables[name]))
+        save_format = '{year}_{month}_{day}_{number}_create_{tableName}_table.php'.format(
+            year=now.strftime('%Y'),
+            month=now.strftime('%m'),
+            day=now.strftime('%d'),
+            number="".zfill(6),
+            tableName=migration_tables[name]
+        )
+        out.write('Table name: {0}  Migration File: {1}\n\n'.format(migration_tables[name], save_format))
         out.write(''.join(migrations[name]))
         out.write('\n\n\n'.format(name))
 
@@ -415,7 +442,7 @@ class GenerateLaravel5MigrationError(Exception):
         return repr(self.typ) + ': ' + repr(self.message)
 
 
-class GenerateLaravel5MigrationWizard_PreviewPage(WizardPage):
+class GenerateLaravel5MigrationWizardPreviewPage(WizardPage):
     def __init__(self, owner, sql_text):
         WizardPage.__init__(self, owner, 'Review Generated Migration(s)')
 
@@ -446,23 +473,37 @@ class GenerateLaravel5MigrationWizard_PreviewPage(WizardPage):
 
         if file_chooser.run_modal() == mforms.ResultOk:
             path = file_chooser.get_path()
-            text = self.sql_text.get_text(False)
 
-            i = 0
+            i = len(glob.glob(path + "/*_table.php"))
             now = datetime.datetime.now()
-            for mkey in sorted(migrations):
-                print mkey
+            for key in sorted(migrations):
                 try:
-                    with open(path + '/%s_%s_%s_%s_create_%s_table.php' % (
-                            now.strftime('%Y'), now.strftime('%m'), now.strftime('%d'), str(i).zfill(6), migration_tables[mkey]),
-                              'w+') as f:
-                        f.write(''.join(migrations[mkey]))
-                        i += 1
+                    search_format = "*_create_{tableName}_table.php".format(
+                        tableName=migration_tables[key]
+                    )
+
+                    search = glob.glob(path + "/" + search_format)
+                    for file in search:
+                        with open(file, 'w+') as f:
+                            f.write(''.join(migrations[key]))
+
+                    if len(search) == 0:
+                        save_format = '{year}_{month}_{day}_{number}_create_{tableName}_table.php'.format(
+                            year=now.strftime('%Y'),
+                            month=now.strftime('%m'),
+                            day=now.strftime('%d'),
+                            number=str(i).zfill(6),
+                            tableName=migration_tables[key]
+                        )
+                        with open(path + "/" + save_format, 'w+') as f:
+                            f.write(''.join(migrations[key]))
+                            i += 1
+
                 except IOError as e:
                     mforms.Utilities.show_error(
                         'Save to File',
                         'Could not save to file "%s": %s' % (path, str(e)),
-                        'OK'
+                        'OK', '', ''
                     )
 
 
@@ -473,5 +514,5 @@ class GenerateLaravel5MigrationWizard(WizardForm):
         self.set_name('generate_laravel_5_migration_wizard')
         self.set_title('Generate Laravel 5 Migration Wizard')
 
-        self.preview_page = GenerateLaravel5MigrationWizard_PreviewPage(self, sql_text)
+        self.preview_page = GenerateLaravel5MigrationWizardPreviewPage(self, sql_text)
         self.add_page(self.preview_page)
