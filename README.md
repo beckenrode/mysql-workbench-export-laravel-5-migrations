@@ -28,6 +28,12 @@ And of course this plugin is open source with a [public repository](https://gith
 
 Want to contribute? Great!
 
+### Thanks
+
+Thanks to [all](https://github.com/beckenrode/mysql-workbench-export-laravel-5-migrations/graphs/contributors) that have and continue to contribute to this project.
+
+Extra thanks to [VeeeneX](https://github.com/VeeeneX) for all the great PRs!
+
 ### Todos
 
  - types that are unsupported by Laravel
