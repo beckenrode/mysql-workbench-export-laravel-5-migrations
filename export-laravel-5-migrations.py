@@ -316,7 +316,7 @@ def generate_laravel5_migration(cat):
                     first_foreign_created = False
 
                     for key in tbl.foreignKeys:
-                        if key.name != '':
+                        if key.name != '' and hasattr(key.index, 'name'):
                             index_name = key.index.name
                             foreign_key = key.columns[0].name
 
