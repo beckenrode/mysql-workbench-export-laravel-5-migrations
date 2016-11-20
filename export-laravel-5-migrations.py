@@ -140,7 +140,6 @@ migrationEndingTemplate = '''       Schema::dropIfExists('{tableName}');
                    )
 @ModuleInfo.export(grt.INT, grt.classes.db_Catalog)
 def generate_laravel5_migration(cat):
-
     def create_tree(table_schema):
         tree = {}
         for tbl in sorted(table_schema.tables, key=lambda table: table.name):
@@ -225,7 +224,16 @@ def generate_laravel5_migration(cat):
 
                     primary_key = [col for col in tbl.indices if col.isPrimary == 1]
                     primary_key = primary_key[0] if len(primary_key) > 0 else None
-                    primary_col = primary_key.columns[0].referencedColumn
+
+                    if hasattr(primary_key, 'columns'):
+                        primary_col = primary_key.columns[0].referencedColumn
+                    else:
+                        primary_col = None
+
+                    default_time_values = ['CURRENT_TIMESTAMP',
+                                           'NULL ON UPDATE CURRENT_TIMESTAMP',
+                                           'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+                                           ]
 
                     for col in tbl.columns:
                         if (col.name == 'created_at' or col.name == 'updated_at') and (
@@ -250,6 +258,11 @@ def generate_laravel5_migration(cat):
                                 col_type = "INCREMENTS"
 
                         col_data = '\''
+
+                        # Continue if type is not in dictionary
+                        if col_type not in typesDict:
+                            continue
+
                         if typesDict[col_type] == 'char':
                             if col.length > -1:
                                 col_data = '\', %s' % (str(col.length))
@@ -278,9 +291,14 @@ def generate_laravel5_migration(cat):
                                 migrations[ti].append('->nullable()')
 
                             if col.defaultValue != '' and col.defaultValueIsNull != 0:
-                                migrations[ti].append('->default(NULL)')
+                                migrations[ti].append('->default(null)')
                             elif col.defaultValue != '':
-                                migrations[ti].append('->default(%s)' % col.defaultValue)
+                                default_value = col.defaultValue.replace("'", "")
+
+                                if default_value in default_time_values:
+                                    migrations[ti].append("->default(DB::raw('{}'))".format(default_value))
+                                else:
+                                    migrations[ti].append("->default('{}')".format(default_value))
 
                             if col.comment != '':
                                 migrations[ti].append("->comment('{comment}')".format(comment=col.comment))
@@ -294,7 +312,7 @@ def generate_laravel5_migration(cat):
                             index_type = index.owner.indexType.lower()
                             key = index.referencedColumn.name
 
-                            if col != primary_col and index_type != "primary":
+                            if (col != primary_col and index_type != "primary") and index_type != "index":
                                 indexes[index_type].append(key)
 
                     for index_type in indexes:
@@ -316,7 +334,7 @@ def generate_laravel5_migration(cat):
                     first_foreign_created = False
 
                     for key in tbl.foreignKeys:
-                        if key.name != '':
+                        if key.name != '' and hasattr(key.index, 'name'):
                             index_name = key.index.name
                             foreign_key = key.columns[0].name
 
