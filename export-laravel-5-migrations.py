@@ -81,7 +81,8 @@ typesDict = {
     'MIDDLEINT': 'mediumInteger',
     'NUMERIC': 'decimal',
     'DEC': 'decimal',
-    'CHARACTER': 'char'
+    'CHARACTER': 'char',
+    'UUID': 'uuid'	
 }
 
 migrationTemplate = '''<?php
@@ -254,6 +255,8 @@ def generate_laravel5_migration(cat):
                                 col_type = "BIG_INCREMENTS"
                             elif col_type == "MEDIUMINT":
                                 col_type = "MEDIUM_INCREMENTS"
+                            elif col_type == "CHAR" and col.length == 36:
+                                col_type = "UUID"
                             else:
                                 col_type = "INCREMENTS"
 
@@ -304,6 +307,9 @@ def generate_laravel5_migration(cat):
                                 migrations[ti].append("->comment('{comment}')".format(comment=col.comment))
 
                             migrations[ti].append(';\n')
+
+                        if col.name == 'id' and typesDict[col_type] == 'uuid':
+                            migrations[ti].append('            $table->primary(\'id\');\n')
 
                     # Generate indexes
                     indexes = {"primary": [], "unique": [], "index": []}
