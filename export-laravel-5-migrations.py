@@ -25,10 +25,15 @@ typesDict = {
     'MEDIUM_INCREMENTS': 'mediumIncrements',
     'INCREMENTS': 'increments',
     'TINYINT': 'tinyInteger',
+	'uTINYINT': 'unsignedTinyInteger',
     'SMALLINT': 'smallInteger',
+	'uSMALLINT': 'unsignedSmallInteger',
     'MEDIUMINT': 'mediumInteger',
+	'uMEDIUMINT': 'unsignedMediumInteger',
     'INT': 'integer',
+	'uINT': 'unsignedInteger',
     'BIGINT': 'bigInteger',
+	'uBIGINT': 'unsignedBigInteger',
     'FLOAT': 'float',
     'DOUBLE': 'double',
     'DECIMAL': 'decimal',
@@ -70,11 +75,17 @@ typesDict = {
     'FLOAT4': '',
     'FLOAT8': '',
     'INT1': 'tinyInteger',
+	'uINT1': 'unsignedTinyInteger',
     'INT2': 'smallInteger',
+	'uINT2': 'unsignedSmallInteger',
     'INT3': 'mediumInteger',
+	'uINT3': 'unsignedMediumInteger',
     'INT4': 'integer',
+	'uINT4': 'unsignedInteger',
     'INT8': 'bigint',
+	'uINT8': 'unsignedBigInteger',
     'INTEGER': 'integer',
+	'uINTEGER': 'unsignedInteger',
     'LONGVARBINARY': '',
     'LONGVARCHAR': '',
     'LONG': '',
@@ -260,6 +271,10 @@ def generate_laravel5_migration(cat):
                             else:
                                 col_type = "INCREMENTS"
 
+                        if (col_type == 'BIGINT' or col_type == 'INT' or col_type == 'TINYINT' or col_type == 'MEDIUMINT' or col_type == 'SMALLINT') and 'UNSIGNED' in col.flags:
+						    col_type = "u" + col_type
+						
+
                         col_data = '\''
 
                         # Continue if type is not in dictionary
@@ -288,7 +303,7 @@ def generate_laravel5_migration(cat):
                                 '            $table->%s(\'%s%s)' % (typesDict[col_type], col.name, col_data))
 
                             if typesDict[col_type] == 'integer' and 'UNSIGNED' in col.flags:
-                                migrations[ti].append('->unsigned()')
+                                migrations[ti].append('->unsigned()')							
 
                             if col.isNotNull != 1:
                                 migrations[ti].append('->nullable()')
