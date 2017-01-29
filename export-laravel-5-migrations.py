@@ -293,8 +293,10 @@ def generate_laravel5_migration(cat):
                         elif typesDict[col_type] == 'enum':
                             col_data = '\', [%s]' % (col.datatypeExplicitParams[1:-1])
                         elif typesDict[col_type] == 'string':
-                            if col.length > -1:
+                            if col.length > -1 and col.length < 255:
                                 col_data = '\', %s' % (str(col.length))
+                            else:
+                                col_data = '\''
 
                         if col.name == 'remember_token' and typesDict[col_type] == 'string' and str(col.length) == 100:
                             migrations[ti].append('            $table->rememberToken();\n')
