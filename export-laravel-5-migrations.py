@@ -93,7 +93,7 @@ typesDict = {
     'NUMERIC': 'decimal',
     'DEC': 'decimal',
     'CHARACTER': 'char',
-    'UUID': 'uuid'	
+    'UUID': 'uuid'
 }
 
 migrationTemplate = '''<?php
@@ -273,7 +273,7 @@ def generate_laravel5_migration(cat):
 
                         if (col_type == 'BIGINT' or col_type == 'INT' or col_type == 'TINYINT' or col_type == 'MEDIUMINT' or col_type == 'SMALLINT') and 'UNSIGNED' in col.flags:
 						    col_type = "u" + col_type
-						
+
 
                         col_data = '\''
 
@@ -305,7 +305,7 @@ def generate_laravel5_migration(cat):
                                 '            $table->%s(\'%s%s)' % (typesDict[col_type], col.name, col_data))
 
                             if typesDict[col_type] == 'integer' and 'UNSIGNED' in col.flags:
-                                migrations[ti].append('->unsigned()')							
+                                migrations[ti].append('->unsigned()')
 
                             if col.isNotNull != 1:
                                 migrations[ti].append('->nullable()')
