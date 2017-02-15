@@ -370,13 +370,21 @@ def generate_laravel5_migration(cat):
                                     migrations[ti].append('\n')
                                     first_foreign_created = True
 
+                         	deleteRule = key.deleteRule
+                            	if deleteRule == "":
+                            		deleteRule = "RESTRICT"
+
+                            	updateRule = key.updateRule
+                            	if updateRule == "":
+                            		updateRule = "RESTRICT"
+
                                 migrations[ti].append(foreignKeyTemplate.format(
                                     foreignKey=foreign_key,
                                     foreignKeyName=index_name,
                                     tableKeyName=key.referencedColumns[0].name,
                                     foreignTableName=key.referencedColumns[0].owner.name,
-                                    onDeleteAction=key.deleteRule.lower(),
-                                    onUpdateAction=key.updateRule.lower()
+                                    onDeleteAction=deleteRule.lower(),
+                                    onUpdateAction=updateRule.lower()
                                 ))
 
                             else:
