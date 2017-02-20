@@ -278,7 +278,8 @@ def generate_laravel5_migration(cat):
                             else:
                                 col_type = "INCREMENTS"
 
-                        if (col_type == 'BIGINT' or col_type == 'INT' or col_type == 'TINYINT' or col_type == 'MEDIUMINT' or col_type == 'SMALLINT') and 'UNSIGNED' in col.flags:
+                        if (
+                                            col_type == 'BIGINT' or col_type == 'INT' or col_type == 'TINYINT' or col_type == 'MEDIUMINT' or col_type == 'SMALLINT') and 'UNSIGNED' in col.flags:
                             col_type = "u" + col_type
 
                         col_data = '\''
@@ -304,7 +305,8 @@ def generate_laravel5_migration(cat):
                             else:
                                 col_data = '\''
 
-                        if col.name == 'remember_token' and typesDict[col_type] == 'string' and str(col.length) == '100':
+                        if col.name == 'remember_token' and typesDict[col_type] == 'string' and str(
+                                col.length) == '100':
                             migrations[ti].append('            $table->rememberToken();\n')
                         elif typesDict[col_type]:
                             migrations[ti].append(
@@ -353,7 +355,8 @@ def generate_laravel5_migration(cat):
                             if len(indexes[index_type][index_name]) != 0:
                                 index_key_template = indexKeyTemplate.format(
                                     indexType=index_type,
-                                    indexColumns=", ".join(['"{}"'.format(column_name) for column_name in indexes[index_type][index_name]]),
+                                    indexColumns=", ".join(['"{}"'.format(column_name) for column_name in
+                                                            indexes[index_type][index_name]]),
                                     indexName=index_name
                                 )
                                 migrations[ti].append(index_key_template)
@@ -381,21 +384,21 @@ def generate_laravel5_migration(cat):
                                     migrations[ti].append('\n')
                                     first_foreign_created = True
 
-                                deleteRule = key.deleteRule
-                                if deleteRule == "":
-                            	    deleteRule = "RESTRICT"
+                                delete_rule = key.deleteRule
+                                if delete_rule == "":
+                                    delete_rule = "RESTRICT"
 
-                                updateRule = key.updateRule
-                                if updateRule == "":
-                            	    updateRule = "RESTRICT"
+                                update_rule = key.updateRule
+                                if update_rule == "":
+                                    update_rule = "RESTRICT"
 
                                 migrations[ti].append(foreignKeyTemplate.format(
                                     foreignKey=foreign_key,
                                     foreignKeyName=index_name,
                                     tableKeyName=key.referencedColumns[0].name,
                                     foreignTableName=key.referencedColumns[0].owner.name,
-                                    onDeleteAction=deleteRule.lower(),
-                                    onUpdateAction=updateRule.lower()
+                                    onDeleteAction=delete_rule.lower(),
+                                    onUpdateAction=update_rule.lower()
                                 ))
 
                             else:
