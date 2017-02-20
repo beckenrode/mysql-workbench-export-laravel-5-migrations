@@ -25,10 +25,15 @@ typesDict = {
     'MEDIUM_INCREMENTS': 'mediumIncrements',
     'INCREMENTS': 'increments',
     'TINYINT': 'tinyInteger',
+	'uTINYINT': 'unsignedTinyInteger',
     'SMALLINT': 'smallInteger',
+	'uSMALLINT': 'unsignedSmallInteger',
     'MEDIUMINT': 'mediumInteger',
+	'uMEDIUMINT': 'unsignedMediumInteger',
     'INT': 'integer',
+	'uINT': 'unsignedInteger',
     'BIGINT': 'bigInteger',
+	'uBIGINT': 'unsignedBigInteger',
     'FLOAT': 'float',
     'DOUBLE': 'double',
     'DECIMAL': 'decimal',
@@ -70,18 +75,25 @@ typesDict = {
     'FLOAT4': '',
     'FLOAT8': '',
     'INT1': 'tinyInteger',
+	'uINT1': 'unsignedTinyInteger',
     'INT2': 'smallInteger',
+	'uINT2': 'unsignedSmallInteger',
     'INT3': 'mediumInteger',
+	'uINT3': 'unsignedMediumInteger',
     'INT4': 'integer',
+	'uINT4': 'unsignedInteger',
     'INT8': 'bigint',
+	'uINT8': 'unsignedBigInteger',
     'INTEGER': 'integer',
+	'uINTEGER': 'unsignedInteger',
     'LONGVARBINARY': '',
     'LONGVARCHAR': '',
     'LONG': '',
     'MIDDLEINT': 'mediumInteger',
     'NUMERIC': 'decimal',
     'DEC': 'decimal',
-    'CHARACTER': 'char'
+    'CHARACTER': 'char',
+    'UUID': 'uuid'	
 }
 
 migrationTemplate = '''<?php
@@ -146,7 +158,7 @@ def generate_laravel5_migration(cat):
             table_references = []
 
             for key in tbl.foreignKeys:
-                if key.name != '':
+                if key.name != '' and tbl.name != key.referencedColumns[0].owner.name and hasattr(key, 'referencedColumns'):
                     table_references.append(key.referencedColumns[0].owner.name)
 
             tree[tbl.name] = table_references
@@ -254,8 +266,14 @@ def generate_laravel5_migration(cat):
                                 col_type = "BIG_INCREMENTS"
                             elif col_type == "MEDIUMINT":
                                 col_type = "MEDIUM_INCREMENTS"
+                            elif col_type == "CHAR" and col.length == 36:
+                                col_type = "UUID"
                             else:
                                 col_type = "INCREMENTS"
+
+                        if (col_type == 'BIGINT' or col_type == 'INT' or col_type == 'TINYINT' or col_type == 'MEDIUMINT' or col_type == 'SMALLINT') and 'UNSIGNED' in col.flags:
+						    col_type = "u" + col_type
+						
 
                         col_data = '\''
 
@@ -275,8 +293,10 @@ def generate_laravel5_migration(cat):
                         elif typesDict[col_type] == 'enum':
                             col_data = '\', [%s]' % (col.datatypeExplicitParams[1:-1])
                         elif typesDict[col_type] == 'string':
-                            if col.length > -1:
+                            if col.length > -1 and col.length < 255:
                                 col_data = '\', %s' % (str(col.length))
+                            else:
+                                col_data = '\''
 
                         if col.name == 'remember_token' and typesDict[col_type] == 'string' and str(col.length) == 100:
                             migrations[ti].append('            $table->rememberToken();\n')
@@ -285,7 +305,7 @@ def generate_laravel5_migration(cat):
                                 '            $table->%s(\'%s%s)' % (typesDict[col_type], col.name, col_data))
 
                             if typesDict[col_type] == 'integer' and 'UNSIGNED' in col.flags:
-                                migrations[ti].append('->unsigned()')
+                                migrations[ti].append('->unsigned()')							
 
                             if col.isNotNull != 1:
                                 migrations[ti].append('->nullable()')
@@ -304,6 +324,9 @@ def generate_laravel5_migration(cat):
                                 migrations[ti].append("->comment('{comment}')".format(comment=col.comment))
 
                             migrations[ti].append(';\n')
+
+                        if col.name == 'id' and typesDict[col_type] == 'uuid':
+                            migrations[ti].append('            $table->primary(\'id\');\n')
 
                     # Generate indexes
                     indexes = {"primary": [], "unique": [], "index": []}
