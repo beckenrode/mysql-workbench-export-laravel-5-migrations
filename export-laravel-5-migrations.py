@@ -136,7 +136,7 @@ schemaCreateTemplate = '''
 '''
 
 indexKeyTemplate = '''
-            $table->{indexType}([{keys}], '{indexType}_{tableName}');
+            $table->{indexType}([{indexColumns}], '{indexName}');
 '''
 
 migrationEndingTemplate = '''       Schema::dropIfExists('{tableName}');
@@ -335,23 +335,28 @@ def generate_laravel5_migration(cat):
                             migrations[ti].append('            $table->primary(\'id\');\n')
 
                     # Generate indexes
-                    indexes = {"primary": [], "unique": [], "index": []}
-                    for col in tbl.indices:
-                        for index in col.columns:
-                            index_type = index.owner.indexType.lower()
-                            key = index.referencedColumn.name
+                    indexes = {"primary": {}, "unique": {}, "index": {}}
+                    for index in tbl.indices:
+                        index_type = index.indexType.lower()
+                        if (index_type == "primary"):
+                            continue
 
-                            if (col != primary_col and index_type != "primary") and index_type != "index":
-                                indexes[index_type].append(key)
+                        index_name = index.name
+                        indexes[index_type][index_name] = []
+
+                        index_columns = []
+                        for column in index.columns:
+                            indexes[index_type][index_name].append(column.referencedColumn.name)
 
                     for index_type in indexes:
-                        if len(indexes[index_type]) != 0:
-                            index_key_template = indexKeyTemplate.format(
-                                indexType=index_type,
-                                keys=", ".join(['"{}"'.format(value) for value in indexes[index_type]]),
-                                tableName=table_name
-                            )
-                            migrations[ti].append(index_key_template)
+                        for index_name in indexes[index_type]:
+                            if len(indexes[index_type][index_name]) != 0:
+                                index_key_template = indexKeyTemplate.format(
+                                    indexType=index_type,
+                                    indexColumns=", ".join(['"{}"'.format(column_name) for column_name in indexes[index_type][index_name]]),
+                                    indexName=index_name
+                                )
+                                migrations[ti].append(index_key_template)
 
                     if deleted_at is True:
                         migrations[ti].append('            $table->softDeletes();\n')
