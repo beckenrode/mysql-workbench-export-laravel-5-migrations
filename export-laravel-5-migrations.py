@@ -298,7 +298,7 @@ def generate_laravel5_migration(cat):
                             else:
                                 col_data = '\''
 
-                        if col.name == 'remember_token' and typesDict[col_type] == 'string' and str(col.length) == 100:
+                        if col.name == 'remember_token' and typesDict[col_type] == 'string' and str(col.length) == '100':
                             migrations[ti].append('            $table->rememberToken();\n')
                         elif typesDict[col_type]:
                             migrations[ti].append(
