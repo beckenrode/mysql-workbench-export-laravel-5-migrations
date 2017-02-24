@@ -186,6 +186,8 @@ def generate_laravel5_migration(cat):
         global migrations
         tables = sorted(table_schema.tables, key=lambda table: table.name)
         ti = 0
+        migrations = {}
+        migration_tables = []
 
         for reference_tables in tree:
             for reference in reference_tables:
