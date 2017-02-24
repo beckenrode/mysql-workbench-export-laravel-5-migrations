@@ -36,7 +36,7 @@ Extra thanks to [VeeeneX](https://github.com/VeeeneX) for all the great PRs!
 
 ### Todos
 
- - types that are unsupported by Laravel
+ - Types that are unsupported by Laravel
 
 License
 ----

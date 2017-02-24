@@ -25,15 +25,15 @@ typesDict = {
     'MEDIUM_INCREMENTS': 'mediumIncrements',
     'INCREMENTS': 'increments',
     'TINYINT': 'tinyInteger',
-	'uTINYINT': 'unsignedTinyInteger',
+    'uTINYINT': 'unsignedTinyInteger',
     'SMALLINT': 'smallInteger',
-	'uSMALLINT': 'unsignedSmallInteger',
+    'uSMALLINT': 'unsignedSmallInteger',
     'MEDIUMINT': 'mediumInteger',
-	'uMEDIUMINT': 'unsignedMediumInteger',
+    'uMEDIUMINT': 'unsignedMediumInteger',
     'INT': 'integer',
-	'uINT': 'unsignedInteger',
+    'uINT': 'unsignedInteger',
     'BIGINT': 'bigInteger',
-	'uBIGINT': 'unsignedBigInteger',
+    'uBIGINT': 'unsignedBigInteger',
     'FLOAT': 'float',
     'DOUBLE': 'double',
     'DECIMAL': 'decimal',
@@ -75,17 +75,17 @@ typesDict = {
     'FLOAT4': '',
     'FLOAT8': '',
     'INT1': 'tinyInteger',
-	'uINT1': 'unsignedTinyInteger',
+    'uINT1': 'unsignedTinyInteger',
     'INT2': 'smallInteger',
-	'uINT2': 'unsignedSmallInteger',
+    'uINT2': 'unsignedSmallInteger',
     'INT3': 'mediumInteger',
-	'uINT3': 'unsignedMediumInteger',
+    'uINT3': 'unsignedMediumInteger',
     'INT4': 'integer',
-	'uINT4': 'unsignedInteger',
+    'uINT4': 'unsignedInteger',
     'INT8': 'bigint',
-	'uINT8': 'unsignedBigInteger',
+    'uINT8': 'unsignedBigInteger',
     'INTEGER': 'integer',
-	'uINTEGER': 'unsignedInteger',
+    'uINTEGER': 'unsignedInteger',
     'LONGVARBINARY': '',
     'LONGVARCHAR': '',
     'LONG': '',
@@ -93,7 +93,7 @@ typesDict = {
     'NUMERIC': 'decimal',
     'DEC': 'decimal',
     'CHARACTER': 'char',
-    'UUID': 'uuid'	
+    'UUID': 'uuid'
 }
 
 migrationTemplate = '''<?php
@@ -158,7 +158,8 @@ def generate_laravel5_migration(cat):
             table_references = []
 
             for key in tbl.foreignKeys:
-                if key.name != '' and tbl.name != key.referencedColumns[0].owner.name and hasattr(key, 'referencedColumns'):
+                if key.name != '' and tbl.name != key.referencedColumns[0].owner.name and hasattr(key,
+                                                                                                  'referencedColumns'):
                     table_references.append(key.referencedColumns[0].owner.name)
 
             tree[tbl.name] = table_references
@@ -248,6 +249,12 @@ def generate_laravel5_migration(cat):
                                            ]
 
                     for col in tbl.columns:
+                        # Name is important attribute so it has to be set
+                        # in order to make this work
+                        # https://github.com/beckenrode/mysql-workbench-export-laravel-5-migrations/issues/18#issuecomment-272152778
+                        if hasattr(col, 'name'):
+                            continue
+
                         if (col.name == 'created_at' or col.name == 'updated_at') and (
                                         timestamps is True or timestamps_nullable is True):
                             continue
@@ -271,9 +278,9 @@ def generate_laravel5_migration(cat):
                             else:
                                 col_type = "INCREMENTS"
 
-                        if (col_type == 'BIGINT' or col_type == 'INT' or col_type == 'TINYINT' or col_type == 'MEDIUMINT' or col_type == 'SMALLINT') and 'UNSIGNED' in col.flags:
-						    col_type = "u" + col_type
-						
+                        if (
+                                            col_type == 'BIGINT' or col_type == 'INT' or col_type == 'TINYINT' or col_type == 'MEDIUMINT' or col_type == 'SMALLINT') and 'UNSIGNED' in col.flags:
+                            col_type = "u" + col_type
 
                         col_data = '\''
 
@@ -298,14 +305,15 @@ def generate_laravel5_migration(cat):
                             else:
                                 col_data = '\''
 
-                        if col.name == 'remember_token' and typesDict[col_type] == 'string' and str(col.length) == 100:
+                        if col.name == 'remember_token' and typesDict[col_type] == 'string' and str(
+                                col.length) == '100':
                             migrations[ti].append('            $table->rememberToken();\n')
                         elif typesDict[col_type]:
                             migrations[ti].append(
                                 '            $table->%s(\'%s%s)' % (typesDict[col_type], col.name, col_data))
 
                             if typesDict[col_type] == 'integer' and 'UNSIGNED' in col.flags:
-                                migrations[ti].append('->unsigned()')							
+                                migrations[ti].append('->unsigned()')
 
                             if col.isNotNull != 1:
                                 migrations[ti].append('->nullable()')
@@ -347,7 +355,8 @@ def generate_laravel5_migration(cat):
                             if len(indexes[index_type][index_name]) != 0:
                                 index_key_template = indexKeyTemplate.format(
                                     indexType=index_type,
-                                    indexColumns=", ".join(['"{}"'.format(column_name) for column_name in indexes[index_type][index_name]]),
+                                    indexColumns=", ".join(['"{}"'.format(column_name) for column_name in
+                                                            indexes[index_type][index_name]]),
                                     indexName=index_name
                                 )
                                 migrations[ti].append(index_key_template)
@@ -375,13 +384,21 @@ def generate_laravel5_migration(cat):
                                     migrations[ti].append('\n')
                                     first_foreign_created = True
 
+                                delete_rule = key.deleteRule
+                                if delete_rule == "":
+                                    delete_rule = "RESTRICT"
+
+                                update_rule = key.updateRule
+                                if update_rule == "":
+                                    update_rule = "RESTRICT"
+
                                 migrations[ti].append(foreignKeyTemplate.format(
                                     foreignKey=foreign_key,
                                     foreignKeyName=index_name,
                                     tableKeyName=key.referencedColumns[0].name,
                                     foreignTableName=key.referencedColumns[0].owner.name,
-                                    onDeleteAction=key.deleteRule.lower(),
-                                    onUpdateAction=key.updateRule.lower()
+                                    onDeleteAction=delete_rule.lower(),
+                                    onUpdateAction=update_rule.lower()
                                 ))
 
                             else:
@@ -507,7 +524,7 @@ class GenerateLaravel5MigrationWizardPreviewPage(WizardPage):
 
     def create_ui(self):
         button_box = mforms.newBox(True)
-        button_box.set_padding(8)
+        button_box.set_padding(20)
 
         button_box.add(self.save_button, False, True)
 
