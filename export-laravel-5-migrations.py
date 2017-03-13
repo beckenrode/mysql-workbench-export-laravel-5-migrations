@@ -523,13 +523,8 @@ class GenerateLaravel5MigrationWizardPreviewPage(WizardPage):
         self.main.finish()
 
     def create_ui(self):
-        button_box = mforms.newBox(True)
-        button_box.set_padding(20)
-
-        button_box.add(self.save_button, False, True)
-
-        self.content.add_end(button_box, False, False)
         self.content.add_end(self.sql_text, True, True)
+        self.content.add_end(self.save_button, False, True)
 
     def save_clicked(self):
         file_chooser = mforms.newFileChooser(self.main, mforms.OpenDirectory)
