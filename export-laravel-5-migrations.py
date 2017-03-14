@@ -252,89 +252,90 @@ def generate_laravel5_migration(cat):
                         # Name is important attribute so it has to be set
                         # in order to make this work
                         # https://github.com/beckenrode/mysql-workbench-export-laravel-5-migrations/issues/18#issuecomment-272152778
-                        if hasattr(col, 'name'):
-                            continue
+                        try:
 
-                        if (col.name == 'created_at' or col.name == 'updated_at') and (
-                                        timestamps is True or timestamps_nullable is True):
-                            continue
+                            if (col.name == 'created_at' or col.name == 'updated_at') and (
+                                            timestamps is True or timestamps_nullable is True):
+                                continue
 
-                        if col.name == 'deleted_at':
-                            deleted_at = True
-                            continue
+                            if col.name == 'deleted_at':
+                                deleted_at = True
+                                continue
 
-                        if col.simpleType:
-                            col_type = col.simpleType.name
-                        else:
-                            col_type = col.userType.name
-
-                        if col == primary_col:
-                            if col_type == "BIGINT":
-                                col_type = "BIG_INCREMENTS"
-                            elif col_type == "MEDIUMINT":
-                                col_type = "MEDIUM_INCREMENTS"
-                            elif col_type == "CHAR" and col.length == 36:
-                                col_type = "UUID"
+                            if col.simpleType:
+                                col_type = col.simpleType.name
                             else:
-                                col_type = "INCREMENTS"
+                                col_type = col.userType.name
 
-                        if (
-                                            col_type == 'BIGINT' or col_type == 'INT' or col_type == 'TINYINT' or col_type == 'MEDIUMINT' or col_type == 'SMALLINT') and 'UNSIGNED' in col.flags:
-                            col_type = "u" + col_type
-
-                        col_data = '\''
-
-                        # Continue if type is not in dictionary
-                        if col_type not in typesDict:
-                            continue
-
-                        if typesDict[col_type] == 'char':
-                            if col.length > -1:
-                                col_data = '\', %s' % (str(col.length))
-                        elif typesDict[col_type] == 'decimal':
-                            if col.precision > -1 and col.scale > -1:
-                                col_data = '\', %s, %s' % (str(col.precision), str(col.scale))
-                        elif typesDict[col_type] == 'double':
-                            if col.precision > -1 and col.length > -1:
-                                col_data = '\', %s, %s' % (str(col.length), str(col.precision))
-                        elif typesDict[col_type] == 'enum':
-                            col_data = '\', [%s]' % (col.datatypeExplicitParams[1:-1])
-                        elif typesDict[col_type] == 'string':
-                            if col.length > -1 and col.length < 255:
-                                col_data = '\', %s' % (str(col.length))
-                            else:
-                                col_data = '\''
-
-                        if col.name == 'remember_token' and typesDict[col_type] == 'string' and str(
-                                col.length) == '100':
-                            migrations[ti].append('            $table->rememberToken();\n')
-                        elif typesDict[col_type]:
-                            migrations[ti].append(
-                                '            $table->%s(\'%s%s)' % (typesDict[col_type], col.name, col_data))
-
-                            if typesDict[col_type] == 'integer' and 'UNSIGNED' in col.flags:
-                                migrations[ti].append('->unsigned()')
-
-                            if col.isNotNull != 1:
-                                migrations[ti].append('->nullable()')
-
-                            if col.defaultValue != '' and col.defaultValueIsNull != 0:
-                                migrations[ti].append('->default(null)')
-                            elif col.defaultValue != '':
-                                default_value = col.defaultValue.replace("'", "")
-
-                                if default_value in default_time_values:
-                                    migrations[ti].append("->default(DB::raw('{}'))".format(default_value))
+                            if col == primary_col:
+                                if col_type == "BIGINT":
+                                    col_type = "BIG_INCREMENTS"
+                                elif col_type == "MEDIUMINT":
+                                    col_type = "MEDIUM_INCREMENTS"
+                                elif col_type == "CHAR" and col.length == 36:
+                                    col_type = "UUID"
                                 else:
-                                    migrations[ti].append("->default('{}')".format(default_value))
+                                    col_type = "INCREMENTS"
 
-                            if col.comment != '':
-                                migrations[ti].append("->comment('{comment}')".format(comment=col.comment))
+                            if (
+                                                col_type == 'BIGINT' or col_type == 'INT' or col_type == 'TINYINT' or col_type == 'MEDIUMINT' or col_type == 'SMALLINT') and 'UNSIGNED' in col.flags:
+                                col_type = "u" + col_type
 
-                            migrations[ti].append(';\n')
+                            col_data = '\''
 
-                        if col.name == 'id' and typesDict[col_type] == 'uuid':
-                            migrations[ti].append('            $table->primary(\'id\');\n')
+                            # Continue if type is not in dictionary
+                            if col_type not in typesDict:
+                                continue
+
+                            if typesDict[col_type] == 'char':
+                                if col.length > -1:
+                                    col_data = '\', %s' % (str(col.length))
+                            elif typesDict[col_type] == 'decimal':
+                                if col.precision > -1 and col.scale > -1:
+                                    col_data = '\', %s, %s' % (str(col.precision), str(col.scale))
+                            elif typesDict[col_type] == 'double':
+                                if col.precision > -1 and col.length > -1:
+                                    col_data = '\', %s, %s' % (str(col.length), str(col.precision))
+                            elif typesDict[col_type] == 'enum':
+                                col_data = '\', [%s]' % (col.datatypeExplicitParams[1:-1])
+                            elif typesDict[col_type] == 'string':
+                                if col.length > -1 and col.length < 255:
+                                    col_data = '\', %s' % (str(col.length))
+                                else:
+                                    col_data = '\''
+
+                            if col.name == 'remember_token' and typesDict[col_type] == 'string' and str(
+                                    col.length) == '100':
+                                migrations[ti].append('            $table->rememberToken();\n')
+                            elif typesDict[col_type]:
+                                migrations[ti].append(
+                                    '            $table->%s(\'%s%s)' % (typesDict[col_type], col.name, col_data))
+
+                                if typesDict[col_type] == 'integer' and 'UNSIGNED' in col.flags:
+                                    migrations[ti].append('->unsigned()')
+
+                                if col.isNotNull != 1:
+                                    migrations[ti].append('->nullable()')
+
+                                if col.defaultValue != '' and col.defaultValueIsNull != 0:
+                                    migrations[ti].append('->default(null)')
+                                elif col.defaultValue != '':
+                                    default_value = col.defaultValue.replace("'", "")
+
+                                    if default_value in default_time_values:
+                                        migrations[ti].append("->default(DB::raw('{}'))".format(default_value))
+                                    else:
+                                        migrations[ti].append("->default('{}')".format(default_value))
+
+                                if col.comment != '':
+                                    migrations[ti].append("->comment('{comment}')".format(comment=col.comment))
+
+                                migrations[ti].append(';\n')
+
+                            if col.name == 'id' and typesDict[col_type] == 'uuid':
+                                migrations[ti].append('            $table->primary(\'id\');\n')
+                        except AttributeError:
+                            pass
 
                     # Generate indexes
                     indexes = {"primary": {}, "unique": {}, "index": {}}
