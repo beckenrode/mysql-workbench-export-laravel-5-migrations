@@ -158,8 +158,7 @@ def generate_laravel5_migration(cat):
             table_references = []
 
             for key in tbl.foreignKeys:
-                if key.name != '' and tbl.name != key.referencedColumns[0].owner.name and hasattr(key,
-                                                                                                  'referencedColumns'):
+                if key.name != '' and hasattr(key, 'referencedColumns') and len(key.referencedColumns) > 0 and tbl.name != key.referencedColumns[0].owner.name:
                     table_references.append(key.referencedColumns[0].owner.name)
 
             tree[tbl.name] = table_references
