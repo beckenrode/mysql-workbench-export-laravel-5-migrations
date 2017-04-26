@@ -183,6 +183,13 @@ def generate_laravel5_migration(cat):
             d = dict(((k, v - t) for k, v in d.items() if v))
         return r
 
+    def addslashes(s):
+        l = ["\\", "'", "\0", ]
+        for i in l:
+            if i in s:
+                s = s.replace(i, '\\'+i)
+        return s
+
     def export_schema(table_schema, tree):
         if len(table_schema.tables) == 0:
             return
@@ -334,7 +341,7 @@ def generate_laravel5_migration(cat):
                                         migrations[ti].append("->default('{}')".format(default_value))
 
                                 if col.comment != '':
-                                    migrations[ti].append("->comment('{comment}')".format(comment=col.comment))
+                                    migrations[ti].append("->comment('{comment}')".format(comment=addslashes(col.comment)))
 
                                 migrations[ti].append(';\n')
 
