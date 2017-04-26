@@ -104,6 +104,12 @@ use Illuminate\Database\Migrations\Migration;
 class Create{tableNameCamelCase}Table extends Migration
 {{
     /**
+     * Schema table name to migrate
+     * @var string
+     */
+    public $set_schema_table = '{tableName}';
+
+    /**
      * Run the migrations.
      * @table {tableName}
      *
@@ -111,7 +117,7 @@ class Create{tableNameCamelCase}Table extends Migration
      */
     public function up()
     {{
-        Schema::create('{tableName}', function (Blueprint $table) {{
+        Schema::create($this->set_schema_table, function (Blueprint $table) {{
 '''
 
 foreignKeyTemplate = '''
@@ -139,7 +145,7 @@ indexKeyTemplate = '''
             $table->{indexType}([{indexColumns}], '{indexName}');
 '''
 
-migrationEndingTemplate = '''       Schema::dropIfExists('{tableName}');
+migrationEndingTemplate = '''       Schema::dropIfExists($this->set_schema_table);
      }}
 }}
 '''
