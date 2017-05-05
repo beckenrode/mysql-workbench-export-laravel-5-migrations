@@ -268,7 +268,7 @@ def generate_laravel5_migration(cat):
                                 col_type = "MEDIUM_INCREMENTS"
                             elif col_type == "CHAR" and col.length == 36:
                                 col_type = "UUID"
-                            else:
+                            elif col_type != "VARCHAR":
                                 col_type = "INCREMENTS"
 
                         if (col_type == 'BIGINT' or col_type == 'INT' or col_type == 'TINYINT' or col_type == 'MEDIUMINT' or col_type == 'SMALLINT') and 'UNSIGNED' in col.flags:
@@ -325,7 +325,7 @@ def generate_laravel5_migration(cat):
 
                             migrations[ti].append(';\n')
 
-                        if col.name == 'id' and typesDict[col_type] == 'uuid':
+                        if col.name == 'id' and (typesDict[col_type] == 'uuid' or col_type == "VARCHAR"):
                             migrations[ti].append('            $table->primary(\'id\');\n')
 
                     # Generate indexes
