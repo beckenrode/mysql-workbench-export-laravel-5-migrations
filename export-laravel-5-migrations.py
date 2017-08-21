@@ -117,6 +117,7 @@ class Create{tableNameCamelCase}Table extends Migration
      */
     public function up()
     {{
+        if (Schema::hasTable($this->set_schema_table)) return;
         Schema::create($this->set_schema_table, function (Blueprint $table) {{
 '''
 
