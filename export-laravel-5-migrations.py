@@ -200,6 +200,7 @@ def generate_laravel5_migration(cat):
         global migrations
 
         migration_tables = []
+        migrations = {}
         tables = sorted(table_schema.tables, key=lambda table: table.name)
         ti = 0
 
