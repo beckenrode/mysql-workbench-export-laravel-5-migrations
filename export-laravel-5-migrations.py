@@ -2,6 +2,7 @@
 # MySQL Workbench module
 # A MySQL Workbench plugin which exports a Model to Laravel 5 Migrations
 # Written in MySQL Workbench 6.3.6
+# Support for MySQL Workbench 8.0 added
 
 import cStringIO
 import glob
@@ -159,7 +160,8 @@ ModuleInfo = DefineModule(
     'wb.util.generate_laravel5_migration',
     caption='Export Laravel 5 Migration',
     input=[wbinputs.currentCatalog()],
-    groups=['Catalog/Utilities', 'Menu/Catalog']
+    groups=['Catalog/Utilities', 'Menu/Catalog'],
+    pluginMenu='Catalog'
 )
 @ModuleInfo.export(grt.INT, grt.classes.db_Catalog)
 def generate_laravel5_migration(catalog):
