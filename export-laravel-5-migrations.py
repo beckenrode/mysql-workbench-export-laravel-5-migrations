@@ -132,8 +132,8 @@ migrationDownTemplate = '''
      *
      * @return void
      */
-     public function down()
-     {
+    public function down()
+    {
 '''
 
 schemaCreateTemplate = '''
@@ -144,8 +144,8 @@ indexKeyTemplate = '''
             $table->{indexType}([{indexColumns}], '{indexName}');
 '''
 
-migrationEndingTemplate = '''       Schema::dropIfExists($this->tableName);
-     }}
+migrationEndingTemplate = '''        Schema::dropIfExists($this->tableName);
+    }}
 }}
 '''
 
