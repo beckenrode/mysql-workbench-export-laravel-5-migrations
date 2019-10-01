@@ -294,6 +294,8 @@ def generate_laravel5_migration(catalog):
                                     col_type = "BIG_INCREMENTS"
                                 elif col_type == "MEDIUMINT":
                                     col_type = "MEDIUM_INCREMENTS"
+                                elif col_type == "VARCHAR":
+                                    col_type = "VARCHAR"
                                 elif col_type == "CHAR" and col.length == 36:
                                     col_type = "UUID"
                                 else:
@@ -347,7 +349,10 @@ def generate_laravel5_migration(catalog):
                                 if typesDict[col_type] == 'integer' and 'UNSIGNED' in col.flags:
                                     migrations[ti].append('->unsigned()')
 
-                                if col.isNotNull != 1:
+                                if col == primary_col and typesDict[col_type] == 'string':
+                                    migrations[ti].append('->primary()')
+
+                                if col.isNotNull != 1 and col != primary_col:
                                     migrations[ti].append('->nullable()')
 
                                 if col.defaultValue != '' and col.defaultValueIsNull != 0:
