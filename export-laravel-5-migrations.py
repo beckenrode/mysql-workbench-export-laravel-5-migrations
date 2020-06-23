@@ -132,20 +132,20 @@ migrationDownTemplate = '''
      *
      * @return void
      */
-     public function down()
-     {
+    public function down()
+    {
 '''
 
 schemaCreateTemplate = '''
-        Schema::table('{tableName}', function (Blueprint $table) {{
+           Schema::table('{tableName}', function (Blueprint $table) {{
 '''
 
 indexKeyTemplate = '''
             $table->{indexType}([{indexColumns}], '{indexName}');
 '''
 
-migrationEndingTemplate = '''       Schema::dropIfExists($this->tableName);
-     }}
+migrationEndingTemplate = '''        Schema::dropIfExists($this->tableName);
+    }}
 }}
 '''
 
