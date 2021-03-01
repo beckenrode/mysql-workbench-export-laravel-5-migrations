@@ -4,14 +4,14 @@
 # Written in MySQL Workbench 6.3.6
 # Support for MySQL Workbench 8.0 added
 
-import cStringIO
+from io import StringIO
 import glob
 
 import grt
 import mforms
 import datetime
 
-from grt.modules import Workbench
+
 from wb import DefineModule, wbinputs
 from workbench.ui import WizardForm, WizardPage
 from mforms import newButton, newCodeEditor, FileChooser
@@ -450,7 +450,7 @@ def generate_laravel5_migration(catalog):
 
                     migrations[ti].append("{}}});\n".format(" " * 8))
 
-                    for key, val in foreign_keys.iteritems():
+                    for key, val in foreign_keys.items():
                         if key == tbl.name:
                             keyed_tables = []
                             schema_table = 0
@@ -495,7 +495,7 @@ def generate_laravel5_migration(catalog):
 
         return migrations
 
-    out = cStringIO.StringIO()
+    out = StringIO()
 
     try:
         for schema in [(s, s.name == 'main') for s in catalog.schemata]:
@@ -503,7 +503,7 @@ def generate_laravel5_migration(catalog):
             migrations = export_schema(schema[0], table_tree)
 
     except GenerateLaravel5MigrationError as e:
-        Workbench.confirm(e.typ, e.message)
+        grt.modules.Workbench.confirm(e.typ, e.message)
         return 1
 
     now = datetime.datetime.now()
