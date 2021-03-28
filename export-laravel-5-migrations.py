@@ -556,12 +556,20 @@ class GenerateLaravel5MigrationWizardPreviewPage(WizardPage):
 
     def create_ui(self):
         button_box = mforms.newBox(True)
-        button_box.set_padding(8)
+        # button_box.set_padding(8)
+        button_box.set_padding(0)
+        button_box.set_spacing(12)
 
+        # label = mforms.newLabel("Select the folder to save your migration(s) to.")
+        # button_box.add(label, False, True)
         button_box.add(self.save_button, False, True)
 
-        self.content.add_end(button_box, False, False)
+        self.content.add_end(button_box, False, True)
         self.content.add_end(self.sql_text, True, True)
+        # self.content.add_end(self.save_button, False, True)
+
+        self.content.set_padding(12)
+        self.content.set_spacing(12)
 
     def save_clicked(self):
         file_chooser = mforms.newFileChooser(self.main, mforms.OpenDirectory)
