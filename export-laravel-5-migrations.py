@@ -96,13 +96,11 @@ migrations = {}
 migration_tables = []
 migrationTemplate = '''<?php
 
-namespace Database\Migrations;
-
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class Create{tableNameCamelCase}Table extends Migration
+return new class extends Migration
 {{
     /**
      * Schema table name to migrate
@@ -148,7 +146,7 @@ indexKeyTemplate = '''
 
 migrationEndingTemplate = '''        Schema::dropIfExists($this->tableName);
     }}
-}}
+}};
 '''
 
 ModuleInfo = DefineModule(
