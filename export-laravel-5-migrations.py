@@ -94,35 +94,31 @@ typesDict = {
 
 migrations = {}
 migration_tables = []
-migrationTemplate = '''<?php
-
-namespace Database\Migrations;
-
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Migrations\Migration;
-
-class Create{tableNameCamelCase}Table extends Migration
-{{
-    /**
-     * Schema table name to migrate
-     * @var string
+migrationTemplate = '''
+<?php
+        /**
+     *namespace Database\Migrations;
      */
-    public $tableName = '{tableName}';
 
-    /**
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class  extends Migration
+{{
+        /**
      * Run the migrations.
-     * @table {tableName}
-     *
-     * @return void
      */
     public function up()
     {{
-        Schema::create($this->tableName, function (Blueprint $table) {{
+        Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists('{tableName}');
+        Schema::create('{tableName}', function (Blueprint $table) {{
 '''
 
 foreignKeyTemplate = '''
-            $table->foreign('{foreignKey}', '{foreignKeyName}')
+            $table->foreign('{foreignKey}')
                 ->references('{tableKeyName}')->on('{foreignTableName}')
                 ->onDelete('{onDeleteAction}')
                 ->onUpdate('{onUpdateAction}');
@@ -131,8 +127,6 @@ foreignKeyTemplate = '''
 migrationDownTemplate = '''
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
@@ -146,9 +140,9 @@ indexKeyTemplate = '''
             $table->{indexType}([{indexColumns}], '{indexName}');
 '''
 
-migrationEndingTemplate = '''        Schema::dropIfExists($this->tableName);
+migrationEndingTemplate = '''        Schema::dropIfExists('{tableName}');
     }}
-}}
+}};
 '''
 
 ModuleInfo = DefineModule(
@@ -455,7 +449,7 @@ def generate_laravel5_migration(catalog):
                                     'delete_rule': key.deleteRule
                                 })
 
-                    migrations[ti].append("{}}});\n".format(" " * 8))
+                    migrations[ti].append("{}}});\n Schema::enableForeignKeyConstraints();\n".format(" " * 8))
 
                     for key, val in foreign_keys.items():
                         if key == tbl.name:
@@ -488,7 +482,7 @@ def generate_laravel5_migration(catalog):
                                     ))
 
                             if schema_table == 1:
-                                migrations[ti].append("{}}});\n".format(" " * 12))
+                                migrations[ti].append("{}}});\n Schema::enableForeignKeyConstraints();\n".format(" " * 12))
 
                     migrations[ti].append('    }\n')
 
@@ -522,7 +516,7 @@ def generate_laravel5_migration(catalog):
             number="".zfill(6),
             tableName=migration_tables[name]
         )
-        out.write('Table name: {0}  Migration File: {1}\n\n'.format(migration_tables[name], save_format))
+        # out.write('Table name: {0}  Migration File: {1}\n\n'.format(migration_tables[name], save_format))
         out.write(''.join(migrations[name]))
         out.write('\n\n\n'.format(name))
 
